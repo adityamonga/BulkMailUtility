@@ -9,12 +9,14 @@ class Mailer:
     SUBJECT_PATH = os.path.join(settings.RESOURCES_PATH, 'subject.txt')
     BODY_PATH = os.path.join(settings.RESOURCES_PATH, 'body.txt')
     LAST_INDEX_PATH = os.path.join(settings.RESOURCES_PATH, 'last_index.txt')
+    RECIPIENTS_PER_RUN = 500
 
     def __init__(self):
         self.recipients = None
         self.subject = None
         self.body = None
         self.attachments = None
+        self.last_index = None
 
     def configure(self):
         pass
@@ -26,10 +28,12 @@ class Mailer:
         self.recipients = lines
         self.subject = self.open_and_read(self.SUBJECT_PATH)
         self.body = self.open_and_read(self.BODY_PATH)
+        self.last_index = int(self.open_and_read(self.LAST_INDEX_PATH))
 
     def run(self):
         count = 0
-        for recipient in self.recipients:
+        recipients = self.get_recipients()
+        for recipient in recipients:
             try:
                 send_mail(self.subject,
                           self.body,
@@ -37,8 +41,25 @@ class Mailer:
                           [recipient])
                 count += 1
             except Exception as e:
+                print(recipient)
                 print(e)
-        return count / len(self.recipients)
+        self.write_index_to_disk(recipients)
+        return count
+
+    def write_index_to_disk(self, recipients):
+        curr_position = self.last_index + len(recipients)
+        curr_index = curr_position if curr_position < len(self.recipients) else 0
+        with open(self.LAST_INDEX_PATH, 'w') as f:
+            f.write(str(curr_index))
+
+    def get_recipients(self):
+        if not self.last_index:
+            recipients = self.recipients[:self.RECIPIENTS_PER_RUN]
+        elif (self.last_index + self.RECIPIENTS_PER_RUN) > self.recipients:
+            recipients = self.recipients[self.last_index:]
+        else:
+            recipients = self.recipients[self.last_index: self.last_index+self.RECIPIENTS_PER_RUN]
+        return recipients
 
     @staticmethod
     def open_and_read(fname):
