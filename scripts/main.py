@@ -1,3 +1,4 @@
+import glob
 import os
 
 from django.core.mail import send_mail
@@ -9,6 +10,7 @@ class Mailer:
     SUBJECT_PATH = os.path.join(settings.RESOURCES_PATH, 'subject.txt')
     BODY_PATH = os.path.join(settings.RESOURCES_PATH, 'body.txt')
     LAST_INDEX_PATH = os.path.join(settings.RESOURCES_PATH, 'last_index.txt')
+    ATTACHMENTS_PATH = os.path.join(settings.RESOURCES_PATH, 'attachments')
     RECIPIENTS_PER_RUN = 500
 
     def __init__(self):
@@ -33,22 +35,40 @@ class Mailer:
             self.last_index = int(self.last_index)
         except ValueError:
             self.last_index = 0
+        self.attachments = glob.glob(os.path.join(self.ATTACHMENTS_PATH, '*'))
 
     def run(self):
         count = 0
         recipients = self.get_recipients()
         for recipient in recipients:
             try:
-                send_mail(self.subject,
-                          self.body,
-                          settings.EMAIL_HOST_USER,
-                          [recipient])
+                self.create_and_send_email(recipient)
                 count += 1
             except Exception as e:
                 print(recipient)
                 print(e)
         self.write_index_to_disk(recipients)
         return count
+
+    def create_and_send_email(self, recipient):
+        from django.core.mail import EmailMessage
+
+        if isinstance(recipient, list):
+            recipients = recipient
+        else:
+            recipients = [recipient]
+        mail = EmailMessage(
+            self.subject,
+            self.body,
+            settings.EMAIL_HOST_USER,
+            [settings.EMAIL_HOST_USER],
+            recipients,
+            reply_to=[settings.EMAIL_HOST_USER],
+            # headers={'Message-ID': 'foo'},
+        )
+        for attachment in self.attachments:
+            mail.attach(os.path.basename(attachment), open(attachment, 'rb').read())
+        mail.send()
 
     def write_index_to_disk(self, recipients):
         curr_position = self.last_index + len(recipients)
