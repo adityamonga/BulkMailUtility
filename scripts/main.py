@@ -59,7 +59,7 @@ class Mailer:
     def get_recipients(self):
         if not self.last_index:
             recipients = self.recipients[:self.RECIPIENTS_PER_RUN]
-        elif (self.last_index + self.RECIPIENTS_PER_RUN) > self.recipients:
+        elif (self.last_index + self.RECIPIENTS_PER_RUN) > len(self.recipients):
             recipients = self.recipients[self.last_index:]
         else:
             recipients = self.recipients[self.last_index: self.last_index+self.RECIPIENTS_PER_RUN]
