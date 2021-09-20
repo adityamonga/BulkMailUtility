@@ -28,7 +28,11 @@ class Mailer:
         self.recipients = lines
         self.subject = self.open_and_read(self.SUBJECT_PATH)
         self.body = self.open_and_read(self.BODY_PATH)
-        self.last_index = int(self.open_and_read(self.LAST_INDEX_PATH))
+        self.last_index = self.open_and_read(self.LAST_INDEX_PATH)
+        try:
+            self.last_index = int(self.last_index)
+        except ValueError:
+            self.last_index = 0
 
     def run(self):
         count = 0
