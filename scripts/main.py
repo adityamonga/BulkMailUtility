@@ -1,4 +1,5 @@
 import glob
+import logging
 import os
 
 from django.core.mail import send_mail
@@ -57,6 +58,7 @@ class Mailer:
             recipients = recipient
         else:
             recipients = [recipient]
+        logging.info(f'initiating mail for :: {recipients}')
         mail = EmailMessage(
             self.subject,
             self.body,
@@ -69,6 +71,7 @@ class Mailer:
         for attachment in self.attachments:
             mail.attach(os.path.basename(attachment), open(attachment, 'rb').read())
         mail.send()
+        logging.info('mail sent successfully')
 
     def write_index_to_disk(self, recipients):
         curr_position = self.last_index + len(recipients)
