@@ -39,19 +39,22 @@ class Mailer:
         self.attachments = glob.glob(os.path.join(self.ATTACHMENTS_PATH, '*'))
 
     def run(self):
+        from django.core.mail import get_connection
         count = 0
         recipients = self.get_recipients()
-        for recipient in recipients:
-            try:
-                self.create_and_send_email(recipient)
-                count += 1
-            except Exception as e:
-                print(recipient)
-                print(e)
+        with get_connection() as connection:
+            for recipient in recipients:
+                try:
+                    self.create_and_send_email(recipient, connection)
+                    count += 1
+                except Exception as e:
+                    logging.exception(f'mail to {recipient} failed')
         self.write_index_to_disk(recipients)
+        logging.debug(f'Successful mails: {count} / {len(recipients)}')
+        logging.debug(f'Success rate: {count / len(recipients)}')
         return count
 
-    def create_and_send_email(self, recipient):
+    def create_and_send_email(self, recipient, connection=None):
         from django.core.mail import EmailMessage
 
         if isinstance(recipient, list):
@@ -66,6 +69,7 @@ class Mailer:
             [settings.EMAIL_HOST_USER],
             recipients,
             reply_to=[settings.EMAIL_HOST_USER],
+            connection=connection,
             # headers={'Message-ID': 'foo'},
         )
         for attachment in self.attachments:
