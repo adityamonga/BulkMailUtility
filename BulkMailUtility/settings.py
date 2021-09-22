@@ -22,7 +22,8 @@ env = environ.Env()
 # reading .env file
 env.read_env(SETTINGS_DIR / 'credentials.env')
 
-logging.basicConfig(filename=BASE_DIR.parent / 'BulkMailUtility.log', level=logging.DEBUG)
+os.makedirs("/tmp/logs/", exist_ok=True)
+logging.basicConfig(filename='/tmp/logs/BulkMailUtility.log', level=logging.DEBUG)
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/3.2/howto/deployment/checklist/
