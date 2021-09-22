@@ -19,7 +19,7 @@ class EmailThread(threading.Thread):
         threading.Thread.__init__(self)
 
     def run(self):
-        self.email.send(fail_silently=False)
+        self.email.send()
 
 
 class Mailer:
@@ -57,17 +57,13 @@ class Mailer:
 
     def run(self):
         from django.core.mail import get_connection
-        count = 0
         recipients = self.get_recipients()
-        with get_connection() as connection:
-            for batch_of_recipients in batch(recipients, self.BATCH_OF_RECIPIENTS):
-                try:
-                    self.create_and_send_email(batch_of_recipients, connection)
-                except Exception as e:
-                    logging.exception(f'mail failed')
+        for batch_of_recipients in batch(recipients, self.BATCH_OF_RECIPIENTS):
+            try:
+                self.create_and_send_email(batch_of_recipients)
+            except Exception as e:
+                logging.exception(f'mail failed')
         self.write_index_to_disk(recipients)
-        logging.debug(f'Successful mails: {count} / {len(recipients)}')
-        logging.debug(f'Success rate: {count / len(recipients)}')
 
     def create_and_send_email(self, recipient, connection=None):
         from django.core.mail import EmailMessage
