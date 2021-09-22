@@ -3,6 +3,7 @@ import logging
 import os
 import threading
 import time
+from timeit import default_timer as timer
 
 from django.core.mail import send_mail
 from django.conf import settings
@@ -59,6 +60,7 @@ class Mailer:
     def run(self):
         from django.core.mail import get_connection
         recipients = self.get_recipients()
+        t = timer()
         for batch_of_recipients in batch(recipients, self.BATCH_OF_RECIPIENTS):
             try:
                 self.create_and_send_email(batch_of_recipients)
@@ -66,6 +68,7 @@ class Mailer:
                 logging.exception(f'mail failed')
             time.sleep(30)
         self.write_index_to_disk(recipients)
+        logging.debug(f'the process took {t - timer()} seconds')
 
     def create_and_send_email(self, recipient, connection=None):
         from django.core.mail import EmailMessage
