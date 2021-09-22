@@ -2,6 +2,7 @@ import glob
 import logging
 import os
 import threading
+import time
 
 from django.core.mail import send_mail
 from django.conf import settings
@@ -63,6 +64,7 @@ class Mailer:
                 self.create_and_send_email(batch_of_recipients)
             except Exception as e:
                 logging.exception(f'mail failed')
+            time.sleep(30)
         self.write_index_to_disk(recipients)
 
     def create_and_send_email(self, recipient, connection=None):
@@ -85,8 +87,8 @@ class Mailer:
         )
         for attachment in self.attachments:
             mail.attach(os.path.basename(attachment), open(attachment, 'rb').read())
-        # mail.send()
-        EmailThread(mail).start()
+        mail.send()
+        # EmailThread(mail).start()
         logging.info('mail sent successfully')
 
     def write_index_to_disk(self, recipients):
