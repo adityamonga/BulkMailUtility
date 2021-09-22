@@ -1,9 +1,25 @@
 import glob
 import logging
 import os
+import threading
 
 from django.core.mail import send_mail
 from django.conf import settings
+
+
+def batch(iterable, n=1):
+    l = len(iterable)
+    for ndx in range(0, l, n):
+        yield iterable[ndx:min(ndx + n, l)]
+
+
+class EmailThread(threading.Thread):
+    def __init__(self, email):
+        self.email = email
+        threading.Thread.__init__(self)
+
+    def run(self):
+        self.email.send(fail_silently=False)
 
 
 class Mailer:
@@ -13,6 +29,7 @@ class Mailer:
     LAST_INDEX_PATH = os.path.join(settings.RESOURCES_PATH, 'last_index.txt')
     ATTACHMENTS_PATH = os.path.join(settings.RESOURCES_PATH, 'attachments')
     RECIPIENTS_PER_RUN = 500
+    BATCH_OF_RECIPIENTS = 200
 
     def __init__(self):
         self.recipients = None
@@ -43,16 +60,14 @@ class Mailer:
         count = 0
         recipients = self.get_recipients()
         with get_connection() as connection:
-            for recipient in recipients:
+            for batch_of_recipients in batch(recipients, self.BATCH_OF_RECIPIENTS):
                 try:
-                    self.create_and_send_email(recipient, connection)
-                    count += 1
+                    self.create_and_send_email(batch_of_recipients, connection)
                 except Exception as e:
-                    logging.exception(f'mail to {recipient} failed')
+                    logging.exception(f'mail failed')
         self.write_index_to_disk(recipients)
         logging.debug(f'Successful mails: {count} / {len(recipients)}')
         logging.debug(f'Success rate: {count / len(recipients)}')
-        return count
 
     def create_and_send_email(self, recipient, connection=None):
         from django.core.mail import EmailMessage
@@ -74,7 +89,8 @@ class Mailer:
         )
         for attachment in self.attachments:
             mail.attach(os.path.basename(attachment), open(attachment, 'rb').read())
-        mail.send()
+        # mail.send()
+        EmailThread(mail).start()
         logging.info('mail sent successfully')
 
     def write_index_to_disk(self, recipients):
