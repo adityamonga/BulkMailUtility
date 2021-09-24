@@ -15,11 +15,12 @@ Setting Up:
 1. `cp BulkMailUtility/credentials.env.example BulkMailUtility/credentials.env`
 2. Add credentials to `BulkMailUtility/credentials.env`
 3. Update `resources/subject.txt`, `resources/body.txt`, `resources/recipients.txt`, `resources/attachments/`
+4. `chmod 755 scripts/run.sh`
 
 Run:
 1. `make pip`
 2. `source venv/bin/activate`
-3. `python manage.py runscript scripts.main`
+3. `python manage.py runscript scripts.main` or `./scripts/run.sh`
 
 To set up cron:`make cron`
 
