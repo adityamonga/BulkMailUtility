@@ -11,6 +11,5 @@ install_system_virtualenv:
 environment: install_system_virtualenv
 	python3 -m virtualenv -p python3 $(VIRTUALENV_NAME)
 
-pip:
+pip: environment
 	$(PIP_BIN) install -r requirements.txt
-
