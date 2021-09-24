@@ -142,4 +142,3 @@ EMAIL_HOST_USER = env('EMAIL_HOST_USER')
 EMAIL_HOST_PASSWORD = env('EMAIL_HOST_PASSWORD')
 
 RESOURCES_PATH = BASE_DIR / 'resources'
-LOGGING_INFO_EMAIL = 'info.inifdjalandhar@gmail.com'
