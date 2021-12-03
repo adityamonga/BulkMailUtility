@@ -55,6 +55,8 @@ class Mailer:
             self.last_index = int(self.last_index)
         except ValueError:
             self.last_index = 0
+        if self.last_index >= len(self.recipients):
+            self.last_index = 0
         self.attachments = glob.glob(os.path.join(self.ATTACHMENTS_PATH, '*'))
 
     def run(self):
